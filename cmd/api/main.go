@@ -8,6 +8,7 @@ import (
 	"github.com/DaoVuDat/greenlight/internal/jsonlog"
 	"github.com/DaoVuDat/greenlight/internal/mailer"
 	"os"
+	"strings"
 	"sync"
 	"time"
 	// Import the pq driver so that it can register itself with the database/sql
@@ -41,6 +42,9 @@ type config struct {
 		password string
 		sender   string
 	}
+	cors struct {
+		trustedOrigins []string
+	}
 }
 
 // Update the application struct to hold a new Mailer instance.
@@ -67,15 +71,22 @@ func main() {
 	flag.IntVar(&cfg.limiter.burst, "limiter-burst", 4, "Rate limiter maximum burst")
 	flag.BoolVar(&cfg.limiter.enabled, "limiter-enabled", true, "Enable rate limiter")
 
-	// Read the SMTP server configuration settings into the config struct, using the
-	// Mailtrap settings as the default values. IMPORTANT: If you're following along,
-	// make sure to replace the default values for smtp-username and smtp-password
-	// with your own Mailtrap credentials
 	flag.StringVar(&cfg.smtp.host, "smtp-host", "sandbox.smtp.mailtrap.io", "SMTP host")
 	flag.IntVar(&cfg.smtp.port, "smtp-port", 25, "SMTP port")
 	flag.StringVar(&cfg.smtp.username, "smtp-username", "c16d784df470dc", "SMTP username")
 	flag.StringVar(&cfg.smtp.password, "smtp-password", "32b83077208844", "SMTP password")
 	flag.StringVar(&cfg.smtp.sender, "smtp-sender", "Greenlight <no-reply@dvd.net>", "SMTP sender")
+
+	// Use the flag.Func() function to process the -cors-trusted-origins command line
+	// flag. In this we use the strings.Fields() function to split the flag value into a
+	// slice based on whitespace characters and assign it to our config struct.
+	// Importantly, if the -cors-trusted-origins flag is not present, contains the empty
+	// string, or contains only whitespace, then strings.Fields() will return an empty
+	// []string slice.
+	flag.Func("cors-trusted-origins", "Trusted CORS origins (space separated)", func(val string) error {
+		cfg.cors.trustedOrigins = strings.Fields(val)
+		return nil
+	})
 
 	flag.Parse()
 
