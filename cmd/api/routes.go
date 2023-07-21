@@ -38,5 +38,5 @@ func (app *application) routes() http.Handler {
 	router.Handler(http.MethodGet, "/debug/vars", expvar.Handler())
 
 	// Add the enableCORS() middleware.
-	return app.recoverPanic(app.enableCORS(app.rateLimit(app.authenticate(router))))
+	return app.metrics(app.recoverPanic(app.enableCORS(app.rateLimit(app.authenticate(router)))))
 }
